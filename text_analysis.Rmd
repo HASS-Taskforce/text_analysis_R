@@ -41,6 +41,8 @@ A token is a meaningful unit of text, such as a word, that we are interested in 
 
 For tidy text mining, the token that is stored in each row is most often a single word, but can also be an n-gram, sentence, or paragraph.
 
+Check out this cool app for a [demo of tidy text](https://tidy-shakespeare.herokuapp.com/).
+
 ### Un-nesting tokens
 
 Emily Dickinson wrote some lovely text in her time.
