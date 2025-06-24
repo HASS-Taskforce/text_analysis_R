@@ -1,0 +1,82 @@
+---
+title: "Analysing TED talk content"
+author: "HASS Taskforce"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(readr)
+library(dplyr)
+library(tidytext)
+library(ggplot2)
+library(stringr)
+library(tidyr)
+```
+
+# Final Exercise: Analyzing TED talks
+
+In this exercise, you'll apply text analysis techniques to the data from the [TED talks as Data](https://culturalanalytics.org/article/11044-ted-talks-as-data) paper, published in the Journal of Cultural Analytics. This dataset contains transcripts of TED talks, where each row is a talk, with an ID, headline, text, and speaker field.
+
+Journal of Cultural Analytics
+Kinnaird, Katherine M., and John Laudun. 2019. “TED Talks as Data.” Journal of Cultural Analytics 4 (2). [https://doi.org/10.22148/16.042].
+
+The data can be found following the link in the citation below:
+
+Kinnaird, Katherine M. and John Laudun. 2018. TED Talks Data Set. (https://github.com/johnlaudun/tedtalks/tree/master/data/Release_v0).
+
+## Part 1: Data Preparation
+
+Download the data.
+
+```{r}
+url <- "https://raw.githubusercontent.com/kinnaird-laudun/data/refs/heads/main/Release_v0/TEDonly_final.csv"
+
+ted_talks <- read_csv(url, col_select = c("Talk_ID", "headline", "text", "speaker_1")) |> 
+  rename(talk_id = Talk_ID, speaker = speaker_1) |> 
+  mutate(text = str_remove_all(text, "\\([^\\)]+\\)"))
+```
+
+1. Tokenize the tweets into individual lowercase words, and remove stop words
+
+```{r}
+
+```
+
+2. Visualize the 20 most frequently used words across all talks.
+
+```{r}
+
+```
+
+3. Use the Bing lexicon to score overall sentiment by talk.
+
+```{r}
+
+```
+
+4. Plot the sentiment scores in a histogram
+
+```{r}
+
+```
+
+5. Use the Bing lexicon to look at the most common positive and negative words
+
+```{r}
+
+```
+
+6. Visualise the top ten words contributing to positive and negative sentiment
+
+```{r}
+
+```
+
+7. Explore frequent word pairs in TED talks (after removing stop words)
+
+```{r}
+
+```
