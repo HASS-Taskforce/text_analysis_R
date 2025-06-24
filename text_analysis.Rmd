@@ -1,6 +1,6 @@
 ---
-title: "Tidy text"
-author: "Maria del Mar Quiroga"
+title: "Text analysis with R"
+author: "HASS Taskforce"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -9,7 +9,25 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# The tidy text format - preprocessing
+## Notes about this workshop
+
+All the material in this workshop is adapted from the [Text Mining with R](https://www.tidytextmining.com/) book, by [Julia Silge](https://juliasilge.com/) and [David Robinson](http://varianceexplained.org/); which is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 3.0 United States License](https://creativecommons.org/licenses/by-nc-sa/3.0/us/). This book uses the [tidytext](https://juliasilge.github.io/tidytext/) R package, you may find this [documentation](https://www.quantargo.com/help/r/latest/packages/tidytext/0.3.1) on the specific functions available in the package to be useful.
+
+This is an introduction to the tidy text mining framework along with a collection of examples, but it is not a complete exploration of natural language processing. The [CRAN Task View on Natural Language Processing](https://cran.r-project.org/web/views/NaturalLanguageProcessing.html) provides details on other ways to use R for computational linguistics. There are several areas that you may want to explore in more detail according to your needs.
+
+* **Clustering, classification, and prediction**: Machine learning on text is a vast topic that could easily fill its own volume. We introduce here one method of unsupervised clustering (topic modeling), but many more machine learning algorithms can be used in dealing with text.
+
+* **Word embedding**: One popular modern approach for text analysis is to map words to vector representations, which can then be used to examine linguistic relationships between words and to classify text. Such representations of words are not tidy in the sense that we consider here, but have found powerful applications in machine learning algorithms.
+
+* **More complex tokenization**: The tidytext package trusts the [tokenizers package](https://CRAN.R-project.org/package=tokenizers) (Mullen 2016) to perform tokenization, which itself wraps a variety of tokenizers with a consistent interface, but many others exist for specific applications.
+
+* **Languages other than English**: Some users have had success applying tidytext to their text mining needs for languages other than English, but we don’t cover any such examples here.
+
+We will use many third-party packages in this workshop. Prior to the session, please run:
+
+`install.packages(c("tidyverse", "knitr", "tidytext", "janeaustenr", "topicmodels", "gutenbergr"))`
+
+## The tidy text format - preprocessing
 
 Tidy data has a specific structure:
 
@@ -23,7 +41,7 @@ A token is a meaningful unit of text, such as a word, that we are interested in 
 
 For tidy text mining, the token that is stored in each row is most often a single word, but can also be an n-gram, sentence, or paragraph.
 
-## Un-nesting tokens
+### Un-nesting tokens
 
 Emily Dickinson wrote some lovely text in her time.
 
@@ -57,7 +75,7 @@ text_df |>
 * Punctuation has been stripped.
 * By default, `unnest_tokens()` converts the tokens to lowercase, which makes them easier to compare or combine with other datasets. (Use the `to_lower = FALSE` argument to turn off this behavior).
 
-## Worked example: tidying the works of Jane Austen
+### Worked example: tidying the works of Jane Austen
 
 The `janeaustenr` package provides the text of Jane Austen’s completed, published novels in a one-row-per-line format, where a line is analogous to a literal printed line in a physical book.
 
@@ -88,6 +106,7 @@ tidy_books <- austen_books |>
 tidy_books
 ```
 
+Now that the data is in one-word-per-row format, we can manipulate it with tidy tools like `dplyr`. Often in text analysis, we will want to remove stop words; stop words are words that are not useful for an analysis, typically extremely common words such as “the”, “of”, “to”, and so forth in English. We can remove stop words with an `anti_join()`.
 
 ```{r}
 #stop_words <- tidytext::stop_words
@@ -120,14 +139,14 @@ cleaned_books |>
   theme_minimal()
 ```
 
-# Understanding tf-idf (Term Frequency-Inverse Document Frequency)
+## Understanding tf-idf (Term Frequency-Inverse Document Frequency)
 
 tf-idf is a numerical statistic used in text analysis to reflect how important a word is to a document within a collection of documents (or corpus). It combines two key concepts:
 
-1. Term Frequency (tf): How often a word appears in a document.
-2. Inverse Document Frequency (idf): How rare or common a word is across all documents in the corpus.
+1. **Term Frequency (tf)**: How often a word appears in a document.
+2. **Inverse Document Frequency (idf)**: How rare or common a word is across all documents in the corpus.
 
-Imagine you're an archivist sorting through a large collection of books:
+Imagine you're an archivist sorting through a large collection of books.
 
 Term Frequency (tf) is like counting how many times a specific word appears in a single book. If "dragon" appears 10 times in a fantasy novel, it has a high term frequency for that book.
 
@@ -135,19 +154,19 @@ Inverse Document Frequency (idf) is like checking how many books in your entire 
 
 tf-idf multiplies these two factors together. Words with high tf-idf scores appear frequently in a specific document but are rare across the entire collection.
 
-## Why is tf-idf useful?
+### Why is tf-idf useful?
 
 It helps identify words that are characteristic or important for a particular document within a larger collection. Common words like "the" or "and" will have low tf-idf scores because they appear in almost every document. Unique or specialized terms will have higher tf-idf scores, helping to distinguish documents from each other.
 
 To learn more, check out the [tf-idf chapter](https://www.tidytextmining.com/tfidf) in the tidytext book.
 
-# Sentiment analysis with tidy data
+## Sentiment analysis with tidy data
 
 When we read text, we use our understanding of the emotional intent of words to infer whether a section of text is positive or negative, or perhaps characterized by some other more nuanced emotion like surprise or disgust.
 
 One way to analyze the sentiment of a text is to consider the text as a combination of its individual words and the sentiment content of the whole text as the sum of the sentiment content of the individual words. This isn’t the only way to approach sentiment analysis, but it is an often-used approach, and an approach that naturally takes advantage of the tidy tool ecosystem.
 
-## Sentiment datasets
+### Sentiment datasets
 
 The `tidytext` package provides access to several sentiment lexicons. Three general-purpose lexicons are:
 
@@ -172,7 +191,7 @@ Not every English word is in the lexicons because many English words are neutral
 
 One last caveat is that the size of the chunk of text that we use to add up unigram sentiment scores can have an effect on an analysis. A text the size of many paragraphs can often have positive and negative sentiment averaged out to about zero, while sentence-sized or paragraph-sized text often works better.
 
-## Sentiment analysis with inner join
+### Sentiment analysis with inner join
 
 What are the most common positive words in Emma?
 
@@ -205,7 +224,7 @@ ggplot(jane_austen_sentiment, aes(x = index, y = sentiment, fill = book)) +
   theme_minimal()
 ```
 
-## Most common positive and negative words
+### Most common positive and negative words
 
 We can analyze word counts that contribute to each sentiment in Jane Austen's books.
 
@@ -236,9 +255,9 @@ bing_word_counts |>
 
 Notice that the word “miss” is coded as negative, but in Jane Austen's works it is used as a title for young, unmarried women. We may want to consider adding “miss” to a custom stop-words list.
 
-# N-grams (bigrams)
+## N-grams (bigrams)
 
-## Tokenizing by n-gram
+### Tokenizing by n-gram
 
 We’ve been using the `unnest_tokens` function to tokenize by word, or sometimes by sentence, which is useful for the kinds of sentiment and frequency analyses we’ve been doing so far. But we can also use the function to tokenize into consecutive sequences of words, called n-grams. By seeing how often word X is followed by word Y, we can then build a model of the relationships between them.
 
@@ -254,7 +273,7 @@ austen_bigrams <- austen_books() |>
 austen_bigrams
 ```
 
-## Counting and filtering n-grams
+### Counting and filtering n-grams
 
 Our usual tidy tools apply equally well to n-gram analysis. We can examine the most common bigrams using dplyr’s `count()`:
 
@@ -282,7 +301,7 @@ bigram_counts
 
 We can see that names (whether first and last or with a salutation) are the most common pairs in Jane Austen books.
 
-## Analyzing bigrams
+### Analyzing bigrams
 
 This one-bigram-per-row format is helpful for exploratory analyses of the text. As a simple example, we might be interested in the most common “streets” mentioned in each book:
 
@@ -294,13 +313,13 @@ bigrams_filtered |>
 
 A lot more can be done with n-grams, this is just a taste. See [Chapter 4 of Text Mining with R](https://www.tidytextmining.com/ngrams) for more :)
 
-# Topic modeling
+## Topic modeling
 
 In text mining, we often have collections of documents, such as blog posts or news articles, that we’d like to divide into natural groups so that we can understand them separately. Topic modeling is a method for unsupervised classification of such documents, similar to clustering on numeric data, which finds natural groups of items even when we’re not sure what we’re looking for.
 
 Latent Dirichlet allocation (LDA) is a particularly popular method for fitting a topic model. It treats each document as a mixture of topics, and each topic as a mixture of words. This allows documents to “overlap” each other in terms of content, rather than being separated into discrete groups, in a way that mirrors typical use of natural language.
 
-## Latent Dirichlet allocation
+### Latent Dirichlet allocation
 
 Latent Dirichlet allocation is one of the most common algorithms for topic modeling. Without diving into the math behind the model, we can understand it as being guided by two principles.
 
@@ -384,7 +403,7 @@ word_counts <- by_chapter_word |>
 word_counts
 ```
 
-## LDA on chapters
+### LDA on chapters
 
 Right now our data frame `word_counts` is in a tidy form, with one-term-per-document-per-row, but the `topicmodels` package requires a `DocumentTermMatrix`. This means we need one row for each document (in this case, book chapter), one column for each unique word, and the values in each cell should be the number of times that word appears in that document.
 
@@ -440,3 +459,8 @@ These topics are pretty clearly associated with the four books! There’s no que
 
 The next step would be to put these chapters back in the correct books, check out [Chapter 6 of Text Mining with R](https://www.tidytextmining.com/topicmodeling#per-document) to see how this is done.
 
+## Resources and to learn more
+
+* [Text Mining with R](https://www.tidytextmining.com/) book, by [Julia Silge](https://juliasilge.com/) and [David Robinson](http://varianceexplained.org/)
+
+* [Text Mining with Tidy Data Principles, Julia Silge](https://juliasilge.github.io/tidytext-tutorial/)
