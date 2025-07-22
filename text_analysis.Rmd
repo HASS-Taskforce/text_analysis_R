@@ -2,7 +2,9 @@
 title: "Text analysis with R"
 author: "HASS Taskforce"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -108,13 +110,23 @@ tidy_books <- austen_books |>
 tidy_books
 ```
 
-Now that the data is in one-word-per-row format, we can manipulate it with tidy tools like `dplyr`. Often in text analysis, we will want to remove stop words; stop words are words that are not useful for an analysis, typically extremely common words such as “the”, “of”, “to”, and so forth in English. We can remove stop words with an `anti_join()`.
+Now that the data is in one-word-per-row format, we can manipulate it with tidy tools like `dplyr`. Often in text analysis, we will want to remove stop words; stop words are words that are not useful for an analysis, typically extremely common words such as “the”, “of”, “to”, and so forth in English.
+
+The tidytext package contains a few different lexicons of stop words. The function `get_stopwords()` allows you to specify the language and the lexicon you want (defaults are `language = "en` and `source = "snowball"`). The snowball lexicon contains `r length(unique(tidytext::get_stopwords()$word))` words. You can also use the `stop_words` data frame included in tidytext, which combines the *onix*, *SMART*, and *snowball* lexicons, resulting in `r length(unique(tidytext::stop_words$word))` words.
 
 ```{r}
-#stop_words <- tidytext::stop_words
+length(unique(tidytext::get_stopwords()$word))
+
+length(unique(tidytext::stop_words$word))
+```
+
+We'll use the more comprehensive list of stop_words. We can remove stop words with an `anti_join()`.
+
+```{r}
+stop_words <- tidytext::stop_words
 
 cleaned_books <- tidy_books |> 
-  anti_join(get_stopwords())
+  anti_join(stop_words)
 ```
 
 ## Word frequencies
@@ -133,7 +145,7 @@ library(ggplot2)
 
 cleaned_books |> 
   count(word, sort = TRUE) |> 
-  filter(n > 1000) |> 
+  filter(n > 500) |> 
   mutate(word = reorder(word, n)) |> 
   ggplot(aes(x = n, y = word)) +
   geom_col() +
@@ -350,7 +362,7 @@ When examining a statistical method, it can be useful to try it on a simple case
 Suppose a vandal has broken into your study and torn apart four of your books:
 
 * Great Expectations by Charles Dickens
-* The War of the Worlds by H.G. Wells
+* The Secret Garden by Frances Hodgson Burnett
 * Twenty Thousand Leagues Under the Sea by Jules Verne
 * Pride and Prejudice by Jane Austen
 
@@ -362,7 +374,7 @@ We’ll retrieve the text of these four books using the `gutenbergr` package. [P
 titles <- c("Twenty Thousand Leagues under the Sea",
             "Pride and Prejudice", 
             "Great Expectations",
-            "Alice's Adventures in Wonderland")
+            "The Secret Garden")
 
 library(gutenbergr)
 
@@ -423,7 +435,7 @@ chapters_lda <- LDA(chapters_dtm, k = 4, control = list(seed = 1234))
 chapters_lda
 ```
 
-We can use the aforementioned `tidy()` function to extract the per-topic-per-word probabilities, called β (“beta”), from the LDA model.
+We can use the aforementioned `tidy()` function to extract the per-topic-per-word probabilities, called $\beta$ (“beta”), from the LDA model.
 
 ```{r}
 chapter_topics <- tidy(chapters_lda, matrix = "beta")
@@ -457,7 +469,7 @@ top_terms |>
   theme_minimal()
 ```
 
-These topics are pretty clearly associated with the four books! There’s no question that the topic of “captain”, “nautilus”, “sea”, and “nemo” belongs to *Twenty Thousand Leagues Under the Sea*, and that “jane”, “darcy”, and “elizabeth” belongs to *Pride and Prejudice*. We see “pip” and “joe” from *Great Expectations* and “alice”, “queen”, and “king” from *Alice's Adventures in Wonderland*. We also notice that, in line with LDA being a “fuzzy clustering” method, there can be words in common between multiple topics, such as “time” in topics 2 and 3.
+These topics are pretty clearly associated with the four books! There’s no question that the topic of “captain”, “nautilus”, “sea”, and “nemo” belongs to *Twenty Thousand Leagues Under the Sea*, and that “jane”, “darcy”, and “elizabeth” belongs to *Pride and Prejudice*. We see “pip” and “joe” from *Great Expectations* and “mary”, “colin”, "tha", "dickon", and “garden” from *The Secret Garden*.
 
 The next step would be to put these chapters back in the correct books, check out [Chapter 6 of Text Mining with R](https://www.tidytextmining.com/topicmodeling#per-document) to see how this is done.
 

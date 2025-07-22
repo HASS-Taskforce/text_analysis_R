@@ -2,7 +2,9 @@
 title: "Analysing TED talk content"
 author: "HASS Taskforce"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -27,9 +29,7 @@ The data can be found following the link in the citation below:
 
 Kinnaird, Katherine M. and John Laudun. 2018. TED Talks Data Set. (https://github.com/johnlaudun/tedtalks/tree/master/data/Release_v0).
 
-## Part 1: Data Preparation
-
-Download the data.
+## Download the data.
 
 ```{r}
 url <- "https://raw.githubusercontent.com/kinnaird-laudun/data/refs/heads/main/Release_v0/TEDonly_final.csv"
@@ -39,16 +39,15 @@ ted_talks <- read_csv(url, col_select = c("Talk_ID", "headline", "text", "speake
   mutate(text = str_remove_all(text, "\\([^\\)]+\\)"))
 ```
 
-1. Tokenize the tweets into individual lowercase words, and remove stop words
+## 1. Tokenize the tweets into individual lowercase words, and remove stop words
 
 ```{r}
 tidy_ted <- ted_talks |>
   unnest_tokens(word, text, to_lower = TRUE) |>
-  anti_join(get_stopwords()) |> 
-  filter(!word %in% c("can", "one", "just", "like", "now", "going", "see", "know"))
+  anti_join(stop_words)
 ```
 
-2. Visualize the 20 most frequently used words across all talks.
+## 2. Visualize the 20 most frequently used words across all talks.
 
 ```{r}
 tidy_ted |>
@@ -122,5 +121,5 @@ ted_bigrams <- ted_talks |>
          !word2 %in% stop_words$word) |> 
   count(word1, word2, sort = TRUE)
 
-head(ted_bigrams, 10)
+head(ted_bigrams, 20)
 ```

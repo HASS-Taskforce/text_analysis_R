@@ -1,0 +1,113 @@
+---
+title: "Removed"
+author: "Maria del Mar Quiroga"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Chapter 1
+
+
+
+Let’s look at some science fiction and fantasy novels by H.G. Wells. Let’s get *The Time Machine*, *The War of the Worlds*, *The Invisible Man*, and *The Island of Doctor Moreau*. We can access these works using `gutenberg_download()` and the Project Gutenberg ID numbers for each novel.
+
+[Project Gutenberg](https://www.gutenberg.org/) is a free online library that offers over 60,000 eBooks, mostly classic literature. It makes these texts freely available to the public in digital formats like plain text, which is very useful for NLP.
+
+```{r}
+library(gutenbergr)
+
+hgwells <- gutenberg_download(c(35, 36, 5230, 159))
+
+tidy_hgwells <- hgwells |> 
+  unnest_tokens(word, text) |> 
+  anti_join(stop_words)
+```
+
+What are the most common words in these novels of H.G. Wells?
+
+```{r}
+tidy_hgwells |> 
+  count(word, sort = TRUE)
+```
+
+Let’s get some well-known works of the Brontë sisters, whose lives overlapped with Jane Austen’s somewhat but who wrote in a rather different style. Let’s get *Jane Eyre*, *Wuthering Heights*, *The Tenant of Wildfell Hall*, *Villette*, and *Agnes Grey*. We will again use the Project Gutenberg ID numbers for each novel and access the texts using `gutenberg_download()`.
+
+```{r}
+bronte <- gutenberg_download(c(1260, 768, 969, 9182, 767))
+
+tidy_bronte <- bronte |> 
+  unnest_tokens(word, text) |> 
+  anti_join(stop_words)
+```
+
+
+What are the most common words in these novels of the Brontë sisters?
+
+```{r}
+tidy_bronte |> 
+  count(word, sort = TRUE)
+```
+
+Interesting that “time”, “eyes”, and “hand” are in the top 10 for both H.G. Wells and the Brontë sisters.
+
+Now, let’s calculate the frequency for each word for the works of Jane Austen, the Brontë sisters, and H.G. Wells by binding the data frames together. We can use `pivot_wider()` and `pivot_longer()` from tidyr to reshape our dataframe so that it is just what we need for plotting and comparing the three sets of novels.
+
+```{r}
+library(tidyr)
+library(stringr)
+
+frequency <- bind_rows(mutate(tidy_bronte, author = "Brontë Sisters"),
+                       mutate(tidy_hgwells, author = "H.G. Wells"), 
+                       mutate(tidy_books, author = "Jane Austen")) |> 
+  mutate(word = str_extract(word, "[a-z']+")) |> 
+  count(author, word) |> 
+  group_by(author) |> 
+  mutate(proportion = n / sum(n)) |> 
+  select(-n) |> 
+  pivot_wider(names_from = author, values_from = proportion) |> 
+  pivot_longer(`Brontë Sisters`:`H.G. Wells`,
+               names_to = "author", values_to = "proportion")
+
+frequency
+```
+
+We use `str_extract()` here because the UTF-8 encoded texts from Project Gutenberg have some examples of words with underscores around them to indicate emphasis (like italics). The tokenizer treated these as words, but we don’t want to count “_any_” separately from “any”.
+
+```{r}
+library(scales)
+
+# expect a warning about rows with missing values being removed
+ggplot(frequency, aes(x = proportion, y = `Jane Austen`, 
+                      color = abs(`Jane Austen` - proportion))) +
+  geom_abline(color = "gray40", lty = 2) +
+  geom_jitter(alpha = 0.1, size = 2.5, width = 0.3, height = 0.3) +
+  geom_text(aes(label = word), check_overlap = TRUE, vjust = 1.5) +
+  scale_x_log10(labels = percent_format()) +
+  scale_y_log10(labels = percent_format()) +
+  scale_color_gradient(limits = c(0, 0.001), 
+                       low = "darkslategray4", high = "gray75") +
+  facet_wrap(~author, ncol = 2) +
+  theme(legend.position="none") +
+  labs(y = "Jane Austen", x = NULL)
+```
+
+
+Words in the Austen-Brontë panel are closer to the zero-slope line than in the Austen-Wells panel. Also notice that the words extend to lower frequencies in the Austen-Brontë panel; there is empty space in the Austen-Wells panel at low frequency.
+
+We can confirm this using a correlation test.
+```{r}
+cor.test(data = frequency[frequency$author == "Brontë Sisters",],
+         ~ proportion + `Jane Austen`)
+
+```
+
+
+```{r}
+cor.test(data = frequency[frequency$author == "H.G. Wells",], 
+         ~ proportion + `Jane Austen`)
+```
+
